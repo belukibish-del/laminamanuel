@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="Lente DIA — Manuel Belgrano. Experiencia educativa de realidad aumentada de IA al Colorado.">
+<title>Lente DIA — Manuel Belgrano</title>
+<style>
+  :root { --negro:#000; --blanco:#fff; --celeste:#74c8f4; --celeste-osc:#1668a4; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:#000; color:#fff;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .panel { position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.92); padding:16px; overflow:auto; }
+  .tarjeta { width:min(560px,100%); background:#fff; color:#000; border:6px solid #000; outline:4px solid var(--celeste);
+    border-radius:12px; padding:20px; }
+  .tarjeta h1 { margin:0 0 4px; font-size:1.5rem; }
+  .marca { background:#000; color:#fff; display:inline-block; padding:2px 10px; border-radius:6px; font-weight:700; }
+  .aviso { font-size:.95rem; margin:10px 0; }
+  ol, ul { padding-left:1.2rem; margin:8px 0; }
+  #checks { list-style:none; padding:0; font-size:.92rem; }
+  #checks li { padding:4px 0; border-bottom:1px solid #ddd; }
+  #checks li::before { content:attr(data-icono) " "; font-weight:700; }
+  .ok { color:#0a5c1f; } .mal { color:#a00000; font-weight:700; } .aviso-c { color:#7a4b00; }
+  button { font:inherit; font-weight:700; cursor:pointer; border:3px solid #000; background:var(--celeste);
+    color:#000; padding:12px 16px; border-radius:10px; min-height:48px; }
+  button:disabled { background:#ccc; color:#555; cursor:not-allowed; }
+  button.sec { background:#fff; }
+  #btnIniciar { width:100%; margin-top:12px; font-size:1.1rem; }
+  #hud { position:fixed; top:0; left:0; right:0; z-index:10; padding:10px 12px; text-align:center;
+    background:rgba(0,0,0,.75); font-weight:700; display:none; }
+  #subs { position:fixed; left:8px; right:8px; bottom:150px; z-index:10; text-align:center; pointer-events:none; }
+  #subs span { display:inline-block; background:rgba(0,0,0,.88); color:#fff; font-size:1.15rem; line-height:1.35;
+    padding:6px 12px; border-radius:6px; max-width:100%; }
+  #subs span:empty { display:none; }
+  #menu { position:fixed; left:0; right:0; bottom:0; z-index:10; display:none; gap:8px; padding:10px;
+    background:rgba(0,0,0,.85); flex-wrap:wrap; justify-content:center; }
+  #menu button { flex:1 1 44%; font-size:.95rem; }
+  #btnPlay { position:fixed; z-index:12; left:50%; top:50%; transform:translate(-50%,-50%); display:none; font-size:1.2rem; }
+  #texto { position:fixed; z-index:15; left:8px; right:8px; top:56px; bottom:140px; display:none; overflow:auto;
+    background:#fff; color:#000; border:5px solid #000; border-radius:10px; padding:14px; font-size:1.05rem; line-height:1.45; }
+  #texto h2 { margin-top:0; }
+  #texto .cerrar { float:right; }
+  .faq dt { font-weight:700; margin-top:10px; } .faq dd { margin:2px 0 0; }
+  a-scene { position:fixed !important; inset:0; }
+</style>
+<!-- Dependencias externas con versión fija. Si querés evitar CDN, ver INSTRUCCIONES.md (copia local en /vendor). -->
+<script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+</head>
+<body>
+
+<!-- Pantalla inicial: explica y pide permiso ANTES de usar la cámara -->
+<div class="panel" id="inicio">
+  <div class="tarjeta" role="dialog" aria-labelledby="titulo">
+    <span class="marca">IA al Colorado</span>
+    <h1 id="titulo">Lente DIA — Manuel Belgrano</h1>
+    <p class="aviso"><strong>Representación digital educativa</strong> basada en información histórica. No es la persona real.</p>
+    <ol>
+      <li>Tené a mano la lámina impresa (A4, a tamaño real).</li>
+      <li>Tocá «Abrir cámara» y permití el acceso a la cámara. No se usa el micrófono.</li>
+      <li>Enfocá la lámina completa, con buena luz y sin reflejos.</li>
+    </ol>
+    <p class="aviso">La cámara normal del teléfono no alcanza: la experiencia debe estar abierta en esta página.</p>
+    <ul id="checks" aria-live="polite"></ul>
+    <button id="btnIniciar" disabled>Abrir cámara</button>
+    <p class="aviso" id="msgError" role="alert"></p>
+  </div>
+</div>
+
+<div id="hud">Enfocá la lámina completa, con buena luz</div>
+<div id="subs" aria-live="polite"><span id="subsTxt"></span></div>
+<button id="btnPlay">▶ Tocar para reproducir</button>
+<section id="texto" aria-label="Transcripción"></section>
+<nav id="menu" aria-label="Temas"></nav>
+
+<video id="vid" playsinline webkit-playsinline preload="auto" crossorigin="anonymous"
+       style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-10px;top:-10px"></video>
+
+<a-scene id="escena"
+  mindar-image="imageTargetSrc: ./assets/targets.mind; autoStart: false; uiLoading: no; uiScanning: no; uiError: no;"
+  color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true"
+  vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-entity id="ancla" mindar-image-target="targetIndex: 0">
+    <a-video id="aVideo" width="0.7419" height="0.9274" position="0 0.0903 0.01" visible="false"></a-video>
+  </a-entity>
+</a-scene>
+
+<script>
+(async function () {
+  const $ = s => document.querySelector(s);
+  const video = $('#vid'), aVideo = $('#aVideo'), ancla = $('#ancla'), escena = $('#escena');
+  let P = null, actual = null, cues = [], visto = false, videoListo = false, texturaAsignada = false;
+
+  // ---------- utilidades ----------
+  function check(estado, texto) {
+    const li = document.createElement('li');
+    li.className = estado === 'ok' ? 'ok' : estado === 'mal' ? 'mal' : 'aviso-c';
+    li.dataset.icono = estado === 'ok' ? '✔' : estado === 'mal' ? '✖' : '⚠';
+    li.textContent = texto;
+    $('#checks').appendChild(li);
+  }
+  async function existe(url) {
+    try {
+      let r = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+      if (!r.ok) r = await fetch(url, { headers: { Range: 'bytes=0-0' }, cache: 'no-store' });
+      if (!r.ok) return false;
+      return !(r.headers.get('content-type') || '').includes('text/html'); // hosting que devuelve index.html por defecto
+    } catch (e) { return false; }
+  }
+  function parseVTT(t) {
+    const out = [];
+    t.replace(/\r/g, '').split(/\n\n+/).forEach(b => {
+      const l = b.split('\n'), i = l.findIndex(x => x.includes('-->'));
+      if (i < 0) return;
+      const m = l[i].match(/(\d+):(\d+):(\d+)[.,](\d+)\s*-->\s*(\d+):(\d+):(\d+)[.,](\d+)/);
+      if (!m) return;
+      out.push({ s: +m[1] * 3600 + +m[2] * 60 + +m[3] + +m[4] / 1000,
+                 e: +m[5] * 3600 + +m[6] * 60 + +m[7] + +m[8] / 1000,
+                 t: l.slice(i + 1).join(' ') });
+    });
+    return out;
+  }
+  function mostrarTexto(html) { const p = $('#texto'); p.replaceChildren(...html); p.style.display = 'block'; }
+  function el(tag, txt, cls) { const e = document.createElement(tag); if (txt) e.textContent = txt; if (cls) e.className = cls; return e; }
+  function cerrarBtn() { const b = el('button', 'Cerrar', 'sec cerrar'); b.onclick = () => { $('#texto').style.display = 'none'; }; return b; }
+
+  // ---------- carga de proyecto y verificaciones previas ----------
+  try {
+    const r = await fetch('proyecto.json', { cache: 'no-store' });
+    P = await r.json();
+    check('ok', 'proyecto.json cargado');
+  } catch (e) { check('mal', 'No se pudo leer proyecto.json (¿abriste el archivo con file:// ? Usá HTTPS).'); }
+
+  const seguro = window.isSecureContext;
+  check(seguro ? 'ok' : 'mal', seguro ? 'Contexto seguro (HTTPS): la cámara puede habilitarse' : 'Esta página NO está en HTTPS: el navegador bloqueará la cámara');
+  const hayCam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  check(hayCam ? 'ok' : 'mal', hayCam ? 'El navegador permite pedir la cámara' : 'Este navegador no ofrece acceso a la cámara');
+  const libs = typeof AFRAME !== 'undefined' && AFRAME.systems && AFRAME.systems['mindar-image-system'];
+  check(libs ? 'ok' : 'mal', libs ? 'A-Frame y MindAR cargados' : 'No cargaron A-Frame/MindAR (sin conexión al CDN o bloqueo)');
+  const hayMind = await existe('assets/targets.mind');
+  check(hayMind ? 'ok' : 'mal', hayMind ? 'assets/targets.mind encontrado' : 'FALTA assets/targets.mind (hay que compilarlo desde la lámina; ver INSTRUCCIONES.md)');
+  const hayVideo = P ? await existe(P.temas[0].video) : false;
+  check(hayVideo ? 'ok' : 'aviso', hayVideo ? 'Video de bienvenida encontrado' : 'Todavía no hay video del humano digital: se mostrará texto y subtítulos (y un modelo .glb solo si existe)');
+
+  const puedeIniciar = !!(P && seguro && hayCam && libs && hayMind);
+  $('#btnIniciar').disabled = !puedeIniciar;
+
+  // ---------- menú ----------
+  function armarMenu() {
+    const m = $('#menu');
+    P.temas.filter(t => t.id !== 'bienvenida').forEach(t => {
+      const b = el('button', t.titulo); b.onclick = () => cargarTema(t.id); m.appendChild(b);
+    });
+    const q = el('button', 'Haceme una pregunta');
+    q.onclick = () => {
+      const dl = el('dl', null, 'faq');
+      P.pregunta.faq.forEach(f => { dl.appendChild(el('dt', f.p)); dl.appendChild(el('dd', f.r)); });
+      mostrarTexto([cerrarBtn(), el('h2', 'Preguntas preparadas'),
+        el('p', 'Esta experiencia no escucha preguntas en tiempo real. Elegí una de estas:'), dl]);
+    };
+    m.appendChild(q);
+    const t = el('button', 'Ver texto', 'sec'); t.onclick = () => verTranscripcion(); m.appendChild(t);
+    m.style.display = 'flex';
+  }
+  function verTranscripcion() {
+    if (!actual) return;
+    mostrarTexto([cerrarBtn(), el('h2', actual.titulo), el('p', actual.guion)]);
+  }
+
+  // ---------- video ----------
+  function cargarVideo(url) {
+    return new Promise(async resolve => {
+      if (!(await existe(url))) return resolve(false);
+      let fin = false;
+      const listo = ok => { if (fin) return; fin = true; video.removeEventListener('loadeddata', a); video.removeEventListener('error', b); resolve(ok); };
+      const a = () => listo(true), b = () => listo(false);
+      video.addEventListener('loadeddata', a); video.addEventListener('error', b);
+      video.src = url; video.load();
+      setTimeout(() => listo(video.readyState >= 2), 15000);
+    });
+  }
+  function reproducir() {
+    video.muted = false; video.currentTime = 0;
+    const p = video.play();
+    if (p && p.catch) p.catch(() => { $('#btnPlay').style.display = 'block'; });
+  }
+  $('#btnPlay').onclick = () => { $('#btnPlay').style.display = 'none'; reproducir(); };
+  video.addEventListener('timeupdate', () => {
+    const t = video.currentTime, c = cues.find(x => t >= x.s && t <= x.e);
+    $('#subsTxt').textContent = c ? c.t : '';
+  });
+  video.addEventListener('ended', () => { $('#subsTxt').textContent = ''; });
+
+  async function cargarTema(id) {
+    const t = P.temas.find(x => x.id === id); if (!t) return;
+    actual = t; video.pause(); $('#subsTxt').textContent = ''; $('#texto').style.display = 'none'; cues = [];
+    try { const r = await fetch(t.subtitulos, { cache: 'no-store' }); if (r.ok) cues = parseVTT(await r.text()); } catch (e) {}
+    videoListo = await cargarVideo(t.video);
+    if (videoListo) {
+      if (!texturaAsignada) { aVideo.setAttribute('src', '#vid'); texturaAsignada = true; }
+      aVideo.setAttribute('visible', true);
+      if (visto) reproducir();
+    } else {
+      aVideo.setAttribute('visible', false);
+      await alternativaSinVideo(t);
+    }
+  }
+
+  async function alternativaSinVideo(t) {
+    // No se finge un humano hablando: se dice que falta el video y se muestra texto.
+    const nodos = [cerrarBtn(), el('h2', t.titulo),
+      el('p', 'Todavía no hay video del humano digital para este tema. Mientras tanto, esta es la transcripción:'),
+      el('p', t.guion)];
+    if (P.modelo_glb && await existe(P.modelo_glb.ruta)) {
+      if (!document.getElementById('glb')) {
+        const g = document.createElement('a-entity');
+        g.id = 'glb'; g.setAttribute('gltf-model', P.modelo_glb.ruta);
+        g.setAttribute('position', P.modelo_glb.posicion); g.setAttribute('scale', P.modelo_glb.escala);
+        ancla.appendChild(g);
+      }
+      nodos.push(el('p', 'Se muestra el modelo 3D sobre la lámina (sin voz).'));
+    } else {
+      nodos.push(el('p', 'Tampoco hay un modelo 3D (.glb) cargado.'));
+    }
+    mostrarTexto(nodos);
+  }
+
+  ancla.addEventListener('targetFound', () => {
+    visto = true; $('#hud').style.display = 'none';
+    if (videoListo) reproducir();
+  });
+  ancla.addEventListener('targetLost', () => {
+    $('#hud').style.display = 'block'; video.pause();
+  });
+  escena.addEventListener('arError', () => {
+    $('#inicio').style.display = 'flex';
+    $('#msgError').textContent = 'MindAR informó un error al iniciar (cámara no disponible o targets.mind inválido). Revisá permisos y el archivo.';
+  });
+
+  // ---------- inicio con permiso explícito ----------
+  $('#btnIniciar').onclick = async () => {
+    // Desbloqueo de reproducción dentro del gesto del usuario (exigido por iOS/Android).
+    // Solo si el video existe; no se reproduce nada audible.
+    if (hayVideo) {
+      video.muted = true; video.src = P.temas[0].video;
+      const pr = video.play(); if (pr && pr.then) pr.then(() => { video.pause(); video.currentTime = 0; }).catch(() => {});
+    }
+    $('#msgError').textContent = '';
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      s.getTracks().forEach(t => t.stop());
+    } catch (e) {
+      const n = e && e.name;
+      $('#msgError').textContent =
+        n === 'NotAllowedError' ? 'Permiso de cámara denegado. Habilitalo en los ajustes del navegador para este sitio y recargá.' :
+        n === 'NotFoundError' ? 'No se encontró una cámara en este dispositivo.' :
+        n === 'NotReadableError' ? 'La cámara está en uso por otra aplicación.' :
+        'No se pudo abrir la cámara (' + (n || 'error desconocido') + ').';
+      return;
+    }
+    $('#inicio').style.display = 'none'; $('#hud').style.display = 'block';
+    armarMenu();
+    try { await escena.systems['mindar-image-system'].start(); }
+    catch (e) { escena.emit('arError'); return; }
+    cargarTema('bienvenida');
+  };
+})();
+</script>
+</body>
+</html>

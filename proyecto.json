@@ -1,0 +1,115 @@
+{
+  "proyecto": "Lente DIA — Manuel Belgrano",
+  "version": "0.1.0",
+  "marca": "IA al Colorado",
+  "leyenda_lamina": "Enfocá con Lente DIA",
+  "idioma": "es-AR",
+  "personaje": {
+    "nombre": "Manuel Belgrano",
+    "aviso": "Representación digital educativa basada en información histórica; no es la persona real.",
+    "retrato": "ilustración original generada por generar_lamina.py (reemplazable por assets/retrato_humano_digital.png, relación 4:5)"
+  },
+  "lamina": {
+    "png": "lamina_manuel_belgrano.png",
+    "pdf": "lamina_manuel_belgrano.pdf",
+    "px": [
+      2480,
+      3508
+    ],
+    "dpi": 300,
+    "formato": "A4 vertical",
+    "marco_retrato_px": {
+      "x0": 320,
+      "y0": 380,
+      "x1": 2160,
+      "y1": 2680
+    }
+  },
+  "ar": {
+    "motor": "MindAR image tracking + A-Frame",
+    "dependencias": {
+      "aframe": "https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js",
+      "mindar": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"
+    },
+    "target": "assets/targets.mind",
+    "estado_target": "pendiente: debe compilarse desde lamina_manuel_belgrano.png (ver INSTRUCCIONES.md)",
+    "plano_video": {
+      "ancho": 0.7419,
+      "alto": 0.9274,
+      "posicion": "0 0.0903 0.01",
+      "nota": "Unidades MindAR: la lámina mide 1 de ancho y 1.4145 de alto. El plano cubre solo el marco del retrato; el borde y los textos quedan visibles para el seguimiento."
+    }
+  },
+  "temas": [
+    {
+      "id": "bienvenida",
+      "titulo": "Bienvenida",
+      "guion": "¡Hola! Soy una representación digital educativa de Manuel Belgrano. No soy la persona real: soy una recreación basada en información histórica. Te invito a conocer mi historia, el camino hacia la creación de la bandera y mis ideas sobre la educación. Elegí un tema para comenzar.",
+      "video": "assets/video_bienvenida.mp4",
+      "subtitulos": "guiones/bienvenida.vtt",
+      "estado_video": "pendiente: el archivo no existe",
+      "duracion_estimada_s": 23.1
+    },
+    {
+      "id": "historia",
+      "titulo": "Conocé mi historia",
+      "guion": "Nací en Buenos Aires el 3 de junio de 1770. Me formé en España, donde me interesaron las ideas económicas de mi tiempo. Después fui secretario del Consulado de Comercio de Buenos Aires. En 1810 participé en el proceso revolucionario de Mayo. Más tarde tuve responsabilidades militares, como el Éxodo Jujeño y las batallas de Tucumán y Salta. Morí el 20 de junio de 1820. Esto es una recreación educativa: conviene contrastar las fechas con fuentes confiables.",
+      "video": "assets/video_historia.mp4",
+      "subtitulos": "guiones/historia.vtt",
+      "estado_video": "pendiente: el archivo no existe",
+      "duracion_estimada_s": 36.3
+    },
+    {
+      "id": "bandera",
+      "titulo": "La creación de la bandera",
+      "guion": "En febrero de 1812, en Rosario, presenté una bandera celeste y blanca. Fue un momento delicado de la revolución, y la historia de esa bandera tiene matices que los historiadores discuten. Por eso conviene consultar archivos y museos para conocer los detalles. Una forma de resumir su sentido es esta: un símbolo común ayudaba a unir a quienes compartían un mismo proyecto. Es una interpretación educativa, no una cita textual.",
+      "video": "assets/video_bandera.mp4",
+      "subtitulos": "guiones/bandera.vtt",
+      "estado_video": "pendiente: el archivo no existe",
+      "duracion_estimada_s": 32.9
+    },
+    {
+      "id": "educacion",
+      "titulo": "Mi aporte a la educación",
+      "guion": "Como secretario del Consulado de Comercio, defendí la importancia de la educación, la agricultura, la industria y el comercio. Una forma de resumir esa idea sería esta: formar a las personas ayuda a construir una sociedad más justa. Es una recreación educativa de ideas asociadas a mi trabajo, y no una cita textual. ¿Qué te gustaría aprender vos?",
+      "video": "assets/video_educacion.mp4",
+      "subtitulos": "guiones/educacion.vtt",
+      "estado_video": "pendiente: el archivo no existe",
+      "duracion_estimada_s": 28.1
+    }
+  ],
+  "pregunta": {
+    "modo": "preguntas preparadas en texto",
+    "nota": "No se usa micrófono ni reconocimiento de voz: la experiencia no escucha preguntas en tiempo real.",
+    "faq": [
+      {
+        "p": "¿Sos el verdadero Manuel Belgrano?",
+        "r": "No. Soy una representación digital educativa basada en fuentes históricas."
+      },
+      {
+        "p": "¿Cuándo naciste y cuándo falleciste?",
+        "r": "Nací en Buenos Aires el 3 de junio de 1770 y fallecí el 20 de junio de 1820."
+      },
+      {
+        "p": "¿Qué fue el Éxodo Jujeño?",
+        "r": "Fue un episodio de 1812, durante la campaña militar en el norte, en el que se pidió a la población de Jujuy que se retirara. Para conocer los detalles, conviene consultar fuentes históricas confiables."
+      }
+    ]
+  },
+  "modelo_glb": {
+    "ruta": "assets/belgrano_busto.glb",
+    "estado": "propuesto, NO existe. Solo se mostrará si el archivo se agrega y responde por HTTPS.",
+    "escala": "0.5 0.5 0.5",
+    "posicion": "0 0.09 0.15",
+    "requisitos": "busto low-poly, menos de 5 MB, un solo material PBR, origen en la base, 1 unidad = 1 ancho de lámina"
+  },
+  "voz": {
+    "estado": "sin generar",
+    "requiere_autorizacion": true,
+    "nota": "No se generó audio ni se usaron créditos. Usar una voz sintética general en español rioplatense; no clonar una voz real sin autorización."
+  },
+  "prueba": {
+    "estado": "no realizada",
+    "publicacion": "no realizada"
+  }
+}
